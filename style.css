@@ -1,44 +1,9 @@
 body {
-    background-color: #020202;
-    margin: 0;
-    font-family: "Source Sans Pro", sans-serif;
+    font-family: HK Grotesk;
     cursor: crosshair;
-    overflow: hidden;
-}
-
-h1 {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff; 
-    font-size: 5em;
-    font-weight: 900;
-    text-align: center;
-    z-index: 1;
-    pointer-events: none; 
-}
-
-canvas {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    pointer-events: none;
-}
-
-#snowflakes {
-    z-index: 2;
-}
-
-#fireworks {
-    z-index: 1;
-}
-
-.simparam{
+  }
+  
+  .simparam{
     position:absolute;
     left:0px;
     top:0px;

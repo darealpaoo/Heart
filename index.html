@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>?</title>
-  <link rel="stylesheet" href="./style.css">
-</head>
-<body>
-  <!--<h1>Happy Birthday</h1>-->
-  <canvas id="fireworks"></canvas>
-  <canvas id="snowflakes"></canvas>
-
-  <script src="./script.js"></script>
-</body>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://threejs.org/build/three.module.js",
+            "three/addons/": "https://threejs.org/examples/jsm/",
+            "three/nodes": "https://threejs.org/examples/jsm/nodes/Nodes.js",
+            "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.6.8/build/index.module.js"
+        }
+    }
+    </script>
+  </head>
+  <body>
+  </body>
+  <script type='module' src="./src/main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </html>
