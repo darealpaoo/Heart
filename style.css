@@ -1,13 +1,13 @@
-body {
-    font-family: HK Grotesk;
+body, html{
     cursor: crosshair;
-  }
+    font-family: 'Arial', 'Tahoma', 'Verdana', sans-serif;
+}
   
-  .simparam{
+.simparam{
     position:absolute;
     left:0px;
     top:0px;
     width:100px;
     height:25px;
     z-index:100;
-  }
+}

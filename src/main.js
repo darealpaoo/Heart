@@ -14,8 +14,7 @@ window.app = await startApp({
 });
 
 // Thiết lập vị trí và góc quay của camera
-camera.position.set(0.89, 25, 66);
-camera.rotation.set(0.22, 0.01, 0.0);
+camera.position.set(-0.02, 33, 63.73);
 
 renderer3.start();
 
@@ -62,11 +61,12 @@ class sys{
 
 	let _p=vec3();
 	let _n=vec3();
-let cscale=(c,v)=>{
-	return (((((c>>0)&255)*v)|0)<<0)
-			(((((c>>8)&255)*v)|0)<<8)
-			(((((c>>16)&255)*v)|0)<<16);
-}
+	let cscale = (c, v) => {
+		return (((((c >> 0) & 255) * v) | 0) << 0)
+			| (((((c >> 8) & 255) * v) | 0) << 8)
+			| (((((c >> 16) & 255) * v) | 0) << 16);
+	};
+
 sys.node = class {
 	constructor(sys){
 		this.sys = sys;
@@ -168,8 +168,10 @@ function* shell(shell){
 
 function* launcher(launcher){
 	launcher.velocity.set(0,0,0);
+	launcher.position.set(0, 0, 0);
 	while(1){
-		yield irrng(10,30);
+		//yield irrng(10,30);
+		yield irrng(5, 15);
 		if(rrng()>.95)
 			yield 3000;
 		launcher.sys.emit(shell,launcher)
@@ -187,23 +189,31 @@ flow.start(function*(){
 
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-const loader = new FontLoader();
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
+import { MeshBasicMaterial, MeshStandardMaterial, PointLight } from 'three';
+import { WebGLRenderer } from 'https://threejs.org/build/three.module.js';
+import { Camera } from 'https://threejs.org/build/three.module.js';
+import { Scene } from 'https://threejs.org/build/three.module.js';
+import { RenderPass } from 'https://threejs.org/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://threejs.org/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { EffectComposer } from 'https://threejs.org/examples/jsm/postprocessing/EffectComposer.js';
+
+const loader = new FontLoader();
 
 let thraxBomb;
-loader.load( 'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function ( font ) {
+loader.load( 'Noto Sans_Regular.json', function ( font ) {
 
 	const geometry = new TextGeometry( 'thrax', {
-		font: font,
-		size: 16,
-		depth: 1.,
-		curveSegments: 2,
-		bevelEnabled: true,
-		bevelThickness: .1,
-		bevelSize: .1,
-		bevelOffset: 0,
-		bevelSegments: 1
-	} );
+        font: font,
+        size: 16,
+        depth: 1.,
+        curveSegments: 2,
+        bevelEnabled: true,
+        bevelThickness: .1,
+        bevelSize: .1,
+        bevelOffset: 0,
+        bevelSegments: 1
+    });
 	let mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#300'}))
 	
 	scene.add(mesh)
@@ -256,25 +266,24 @@ loader.load( 'https://threejs.org/examples/fonts/helvetiker_regular.typeface.jso
 	
 	
 	thraxBomb = function*(n,shell){
-		for(let i=0;i<300;i++){
+		for(let i=0; i < 100; i++){
 			let spark = n.sys.emit(meshSpark,shell)
 			spark.color = n.color;
 		}
 	}
 
 	thraxBomb = function* (n, shell) {
-		for (let i = 0; i < 300; i++) {
+		for (let i = 0; i < 500; i++) {
 			let spark = n.sys.emit(heartSpark, shell);
 			spark.color = n.color;
 		}
 	};
 } );
 
-// Chữ happy birth day
-loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
-    const textGeometry = new TextGeometry('Happy Birthday', {
+loader.load('Noto Sans_Regular.json', function (font) {
+    const textGeometry = new TextGeometry('Chúc mừng sinh nhật Quân chan\nMong được đồng hành cùng cậu\nđến quãng đời còn lại', {
         font: font,
-        size: 10,
+        size: 5, // Decrease the size
         height: 1,
         curveSegments: 12,
         bevelEnabled: true,
@@ -283,104 +292,135 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
         bevelSegments: 5,
     });
 
-    // ShaderMaterial để tạo hiệu ứng cầu vồng
-    const textMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            time: { value: 0 },
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform float time;
-            varying vec2 vUv;
-            void main() {
-                float r = 0.5 + 0.5 * sin(time + vUv.x * 6.28);
-                float g = 0.5 + 0.5 * sin(time + vUv.x * 6.28 + 2.0);
-                float b = 0.5 + 0.5 * sin(time + vUv.x * 6.28 + 4.0);
-                gl_FragColor = vec4(r, g, b, 1.0);
-            }
-        `,
+    // Set color and emissive properties
+    const textMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(0xffffff), // White color
+        roughness: 0.5,
+        metalness: 0.0,
+        emissive: 0xffffff,
+        emissiveIntensity: 0.5,
+        side: THREE.FrontSide
     });
 
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
-    // Căn chỉnh vị trí chữ
+    // Center the text by adjusting its position
     const boundingBox = new THREE.Box3().setFromObject(textMesh);
     const center = new THREE.Vector3();
     boundingBox.getCenter(center);
-    textMesh.position.set(-center.x, -center.y, -center.z); // Đặt chữ phía sau pháo hoa (z < 0)
+    textMesh.position.set(-50, 50, -50); // Center the text
 
-    // Thêm vào scene
+    // Optional: Adjust the Y position for better visibility
+    textMesh.position.y += 2; // Move it slightly up
+
     scene.add(textMesh);
 
-    // Cập nhật màu sắc động
-    function animateRainbow() {
-        textMaterial.uniforms.time.value += 0.02; // Điều chỉnh tốc độ thay đổi màu
-        requestAnimationFrame(animateRainbow);
+    // Rainbow effect
+    let time = 0;
+    const rainbowColors = [
+        new THREE.Color(0xFF0000), // Red
+        new THREE.Color(0xFF7F00), // Orange
+        new THREE.Color(0xFFFF00), // Yellow
+        new THREE.Color(0x00FF00), // Green
+        new THREE.Color(0x0000FF), // Blue
+        new THREE.Color(0x4B0082), // Indigo
+        new THREE.Color(0x8B00FF), // Violet
+    ];
+
+    function updateRainbow() {
+        time += 0.01;
+        const colorIndex = Math.floor(time * rainbowColors.length) % rainbowColors.length;
+        textMaterial.color = rainbowColors[colorIndex];
     }
-    animateRainbow();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        updateRainbow();
+    }
+    animate();
 });
 
 // Bánh
 function createCake() {
     const cakeGroup = new THREE.Group();
 
-    // Phần thân bánh (trụ tròn)
+    // Base of the cake (cylinder)
     const baseGeometry = new THREE.CylinderGeometry(10, 10, 5, 32);
-    const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffc0cb }); // Màu hồng nhạt
+    const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffc0cb });
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
-    baseMesh.position.y = 2.5; // Nâng bánh lên để không bị chìm vào nền
+    baseMesh.position.y = 2.5;
     cakeGroup.add(baseMesh);
 
-    // Lớp kem trên cùng
+    // Top layer of icing
     const topGeometry = new THREE.CylinderGeometry(10.5, 10.5, 1, 32);
-    const topMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff }); // Màu trắng
+    const topMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const topMesh = new THREE.Mesh(topGeometry, topMaterial);
-    topMesh.position.y = 6; // Đặt trên thân bánh
+    topMesh.position.y = 6;
     cakeGroup.add(topMesh);
 
-    // Trang trí: Đường viền quanh bánh
+    // Decoration: Torus around the cake
     const torusGeometry = new THREE.TorusGeometry(10.5, 0.5, 16, 100);
-    const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4 }); // Màu hồng đậm
+    const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4 });
     const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-    torusMesh.rotation.x = Math.PI / 2; // Xoay để nằm ngang
-    torusMesh.position.y = 6; // Trùng với lớp kem
+    torusMesh.rotation.x = Math.PI / 2;
+    torusMesh.position.y = 6;
     cakeGroup.add(torusMesh);
 
-    // Trang trí: Nến
+    // Adding candles with animated flames
     const candleGeometry = new THREE.CylinderGeometry(0.3, 0.3, 4, 16);
-    const candleMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Màu vàng
+    const candleMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+    
+    // Adjusted flame geometry
+    const flameGeometry = new THREE.CylinderGeometry(0.1, 0.5, 1, 16);
+    const flameMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500 });
+
     for (let i = 0; i < 5; i++) {
         const candleMesh = new THREE.Mesh(candleGeometry, candleMaterial);
         candleMesh.position.set(
             Math.cos((i / 5) * Math.PI * 2) * 5,
-            8, // Cao hơn lớp kem
+            8,
             Math.sin((i / 5) * Math.PI * 2) * 5
         );
         cakeGroup.add(candleMesh);
-    }
 
-    // Trang trí: Ngọn lửa nến
-    const flameGeometry = new THREE.ConeGeometry(0.5, 1, 16);
-    const flameMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500 }); // Màu cam
-    for (let i = 0; i < 5; i++) {
+        // Create flame mesh
         const flameMesh = new THREE.Mesh(flameGeometry, flameMaterial);
         flameMesh.position.set(
             Math.cos((i / 5) * Math.PI * 2) * 5,
-            10, // Nằm trên đỉnh nến
+            10, // Position above the candle
             Math.sin((i / 5) * Math.PI * 2) * 5
         );
+
+        // Make the flame point straight up
+        flameMesh.rotation.x = Math.PI / 2; // Rotate to point up
+
+        // Animate flame flickering
+        (function (flame) {
+            let scale = 1;
+            let direction = 1;
+
+            function animateFlame() {
+                scale += direction * 0.05;
+                if (scale > 1.1 || scale < 0.9) direction *= -1; // Flicker effect
+                flame.scale.set(scale, scale, scale);
+                requestAnimationFrame(animateFlame);
+            }
+            animateFlame();
+        })(flameMesh);
+
         cakeGroup.add(flameMesh);
     }
 
-    // Đặt bánh kem vào cảnh
-    cakeGroup.position.set(0, 0, -20); // Đặt vị trí
+    // Set cake position in the scene
+    cakeGroup.position.set(0, 0, -20);
     scene.add(cakeGroup);
 }
 
+// Call the createCake function to add the cake to the scene
 createCake();
+
+// Xóa button chọn
+const lilGuiElement = document.querySelector('.lil-gui');
+if (lilGuiElement) {
+  lilGuiElement.style.display = 'none';
+}

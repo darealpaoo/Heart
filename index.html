@@ -3,18 +3,71 @@
   <head>
     <link rel="stylesheet" href="style.css" />
     <script type="importmap">
-    {
+      {
         "imports": {
-            "three": "https://threejs.org/build/three.module.js",
-            "three/addons/": "https://threejs.org/examples/jsm/",
-            "three/nodes": "https://threejs.org/examples/jsm/nodes/Nodes.js",
-            "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.6.8/build/index.module.js"
+          "three": "https://threejs.org/build/three.module.js",
+          "three/addons/": "https://threejs.org/examples/jsm/",
+          "three/nodes": "https://threejs.org/examples/jsm/nodes/Nodes.js",
+          "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.6.8/build/index.module.js"
         }
-    }
+      }
     </script>
+    <style>
+      body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:#000;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;font-family:Arial,sans-serif;font-size:24px;text-align:center;transition:opacity 0.5s ease}#content{display:none;background-color:black;width:100%;height:100%}
+    </style>
   </head>
   <body>
+    <div id="overlay">
+      <!--<p></p>-->
+      <img src="chubby-tonton.gif" alt="Loading animation" />
+      <br>
+      <button id="allowButton">Ấn vào đây nè</button>
+    </div>
+
+    <style>
+          #allowButton {
+          background-color: #ff80b3;
+          color: white;
+          font-size: 18px;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 25px;
+          cursor: pointer;
+        }
+    </style>
+    
+    <div id="content"></div>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.10/build/dat.gui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+      const backgroundMusic = new Audio('sound.mp3');
+      backgroundMusic.loop = true;
+      backgroundMusic.volume = 0.5;
+
+      const overlay = document.getElementById('overlay');
+      const content = document.getElementById('content');
+      const allowButton = document.getElementById('allowButton');
+
+      allowButton.addEventListener('click', () => {
+        backgroundMusic
+          .play()
+          .then(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              content.style.display = 'block';
+              overlay.style.display = 'none';
+
+              const script = document.createElement('script');
+              script.type = 'module';
+              script.src = './src/main.js';
+              document.body.appendChild(script);
+
+            }, 1);
+          })
+          .catch(error => {
+            console.error('Không thể phát nhạc do trình duyệt chặn:', error);
+          });
+      });
+    </script>
   </body>
-  <script type='module' src="./src/main.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </html>
