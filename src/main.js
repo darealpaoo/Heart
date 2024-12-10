@@ -11,247 +11,400 @@ let {dd} = renderer3;
 
 camera.position.set(0.00, 50, 50.00); // Camera position
 
-// Bánh
+// Hàm tạo message box
+let messageBox;
+
+function createMessageBox() { 
+    const text = "Ấn vào màn hình để thổi nến";
+    const loader = new FontLoader();
+
+    loader.load('Noto Sans_Regular.json', function (font) {
+        const geometry = new TextGeometry(text, {
+            font: font,
+            size: 5,
+            height: 1,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.5,
+            bevelSize: 0.3,
+            bevelSegments: 5,
+        });
+
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(0xffffff), // Màu trắng
+            transparent: true, // Bật chế độ trong suốt
+            opacity: 1.0, // Độ trong suốt ban đầu
+            roughness: 0.5,
+            metalness: 0.0,
+            emissive: new THREE.Color(0xffffff), // Màu phát sáng
+            emissiveIntensity: 0.2, // Độ sáng nhẹ để tạo hiệu ứng blur
+        });
+
+        messageBox = new THREE.Mesh(geometry, material);
+        messageBox.position.set(-50, 30, -50); // Điều chỉnh vị trí
+        scene.add(messageBox);
+    });
+}
+
+createMessageBox();
+
+// Hàm tạo ngọn lửa
+function createFlame(position) {
+    const flameGeometry = new THREE.CylinderGeometry(0.2, 1, 2, 16);
+    const flameMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff4500,
+        emissive: 0xff4500,
+        emissiveIntensity: 1,
+        transparent: true, // Bật chế độ trong suốt
+    });
+    const flameMesh = new THREE.Mesh(flameGeometry, flameMaterial);
+
+    // Đặt ngọn lửa ở vị trí của nến với y + 3
+    flameMesh.position.set(position.x, position.y + 3, position.z);
+
+    // Đặt ngọn lửa thẳng đứng
+    flameMesh.rotation.x = Math.PI / -180; // Xoay 90 độ quanh trục x
+
+    // Animation nhấp nháy
+    (function animateFlame() {
+        const scale = 1 + Math.random() * 0.1; // Thay đổi kích thước ngẫu nhiên
+        flameMesh.scale.set(scale, scale, scale);
+        requestAnimationFrame(animateFlame);
+    })();
+
+    flameMesh.material.opacity = 1; // Khởi tạo độ trong suốt
+
+    scene.add(flameMesh);
+    return flameMesh; // Trả về ngọn lửa
+}
+
+// Biến để lưu ngọn lửa
+let flames = [];
+
+// Tạo bánh kem
 function createCake() {
     const cakeGroup = new THREE.Group();
 
     // Base of the cake (cylinder)
-    const baseGeometry = new THREE.CylinderGeometry(20, 20, 10, 32); // Tăng kích thước đáy bánh
+    const baseGeometry = new THREE.CylinderGeometry(20, 20, 10, 32);
     const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffc0cb });
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
     baseMesh.position.y = 5;
     cakeGroup.add(baseMesh);
 
     // Top layer of icing
-    const topGeometry = new THREE.CylinderGeometry(21, 21, 2, 32); // Tăng kích thước lớp kem
+    const topGeometry = new THREE.CylinderGeometry(21, 21, 2, 32);
     const topMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const topMesh = new THREE.Mesh(topGeometry, topMaterial);
     topMesh.position.y = 11;
     cakeGroup.add(topMesh);
 
-    // Decoration: Torus around the cake
-    const torusGeometry = new THREE.TorusGeometry(21, 1, 16, 100); // Tăng kích thước vòng trang trí
-    const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4 });
-    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-    torusMesh.rotation.x = Math.PI / 2;
-    torusMesh.position.y = 11;
-    cakeGroup.add(torusMesh);
-
-    // Adding candles with animated flames
-    const candleGeometry = new THREE.CylinderGeometry(0.6, 0.6, 8, 16); // Tăng kích thước nến
+    // Adding candles
+    const candleGeometry = new THREE.CylinderGeometry(0.6, 0.6, 8, 16);
     const candleMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
-
-    const flameGeometry = new THREE.CylinderGeometry(0.2, 1, 2, 16); // Tăng kích thước ngọn lửa
-    const flameMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500 });
 
     for (let i = 0; i < 5; i++) {
         const candleMesh = new THREE.Mesh(candleGeometry, candleMaterial);
         candleMesh.position.set(
-            Math.cos((i / 5) * Math.PI * 2) * 10, // Bán kính tăng theo kích thước bánh
+            Math.cos((i / 5) * Math.PI * 2) * 10,
             16,
             Math.sin((i / 5) * Math.PI * 2) * 10
         );
         cakeGroup.add(candleMesh);
 
-        // Create flame mesh
-        const flameMesh = new THREE.Mesh(flameGeometry, flameMaterial);
-        flameMesh.position.set(
-            Math.cos((i / 5) * Math.PI * 2) * 10,
-            20, // Ngọn lửa cao hơn nến
-            Math.sin((i / 5) * Math.PI * 2) * 10
-        );
-
-        // Make the flame point straight up
-        flameMesh.rotation.x = Math.PI / 2;
-
-        // Animate flame flickering
-        (function (flame) {
-            let scale = 1;
-            let direction = 1;
-
-            function animateFlame() {
-                scale += direction * 0.05;
-                if (scale > 1.1 || scale < 0.9) direction *= -1; // Flicker effect
-                flame.scale.set(scale, scale, scale);
-                requestAnimationFrame(animateFlame);
-            }
-            animateFlame();
-        })(flameMesh);
-
-        cakeGroup.add(flameMesh);
+        // Tạo ngọn lửa cho nến và lưu vào mảng
+        const flameMesh = createFlame(candleMesh.position);
+        flames.push(flameMesh);
     }
 
-    // Set cake position in the scene
-    cakeGroup.position.set(0, 0, -30); // Dịch bánh kem ra xa hơn để nhìn tổng thể
+    cakeGroup.position.set(0, -2, 0);
     scene.add(cakeGroup);
 }
-createCake();
+
+// Hàm để biến mất ngọn lửa
+function extinguishFlames() {
+    flames.forEach(flame => {
+        const fadeOut = setInterval(() => {
+            if (flame.material.opacity > 0) {
+                flame.material.opacity -= 0.05; // Giảm độ trong suốt
+            } else {
+                clearInterval(fadeOut); // Dừng nếu đã hoàn toàn trong suốt
+                scene.remove(flame); // Xóa ngọn lửa khỏi scene
+            }
+        }, 100); // Thay đổi độ trong suốt mỗi 100ms
+    });
+}
+
+// Hàm thêm chữ chúc mừng sinh nhật
+function addBirthdayText() {
+	let text = 'Chúc mừng sinh nhật Quân chan\nMong được đồng hành cùng cậu\nđến quãng đời còn lại';
+
+	// Tạo các chữ cái riêng biệt và thêm chúng vào scene dần dần
+	let letters = [];
+	let index = 0;
+	let maxIndex = text.length;
+	let lineHeight = 10; // Khoảng cách giữa các dòng chữ
+	let xOffset = -80;   // Vị trí bắt đầu của chữ trên trục X
+	let yOffset = 50;    // Vị trí bắt đầu của chữ trên trục Y
+	let currentLine = 0; // Biến để theo dõi dòng hiện tại
+	let currentX = xOffset; // Vị trí X hiện tại cho từng chữ
+	
+	loader.load('Noto Sans_Regular.json', function (font) {
+		function createLetterGeometry(letter, positionX, positionY) {
+			const geometry = new TextGeometry(letter, {
+				font: font,
+				size: 5,
+				height: 1,
+				curveSegments: 12,
+				bevelEnabled: true,
+				bevelThickness: 0.5,
+				bevelSize: 0.3,
+				bevelSegments: 5,
+			});
+			const material = new THREE.MeshStandardMaterial({
+				color: new THREE.Color(0xffffff), // Màu trắng cho chữ
+				roughness: 0.5,
+				metalness: 0.0,
+				emissive: 0xffffff,
+				emissiveIntensity: 0.2,
+			});
+			const mesh = new THREE.Mesh(geometry, material);
+			mesh.position.set(positionX, positionY, -50);
+			return mesh;
+		}
+	
+		function addLetters() {
+			if (index < maxIndex) {
+				const letter = text[index];
+				
+				// Xử lý xuống dòng
+				if (letter === '\n') {
+					currentLine++; // Tăng dòng
+					currentX = xOffset; // Đặt lại vị trí X về đầu dòng
+					index++; // Bỏ qua ký tự xuống dòng
+					return addLetters(); // Gọi lại để xử lý ký tự tiếp theo
+				}
+	
+				const positionY = yOffset - currentLine * lineHeight;
+				const letterMesh = createLetterGeometry(letter, currentX, positionY);
+	
+				// Thêm chữ vào scene nếu không phải khoảng trắng
+				if (letter !== ' ') {
+					scene.add(letterMesh);
+					letters.push(letterMesh);
+				}
+	
+				currentX += 6; // Tăng vị trí X cho chữ tiếp theo
+				index++; // Tăng index để xử lý chữ tiếp theo
+			}
+	
+			if (index < maxIndex) {
+				setTimeout(addLetters, 100); // Tiếp tục thêm chữ sau 100ms
+			}
+		}
+		addLetters(); // Bắt đầu thêm chữ
+	});
+}
 
 import {ParticleContext} from "./components/rtparticles2.js"
 
-let {abs,min,max,random,PI,sin,cos}=Math;
-let rrng=(n=0,p=1)=>(random()*(p-n))+n;
-let irrng=(n=0,p=1)=>((random()*(p-n))+n)|0;
-let grav = -.0098;
-function* mt(){}
-class sys{
-	constructor(){
-		this.nodes = []
-		this.now=performance.now()/1000;
-	}
-	step(){
-		let now=performance.now()/1000;
-		this.dt = now-this.now;
-		this.now=now;
-		this.ndt = this.dt/(1/60)
-		let i=0,w=0;
-		for(;i<this.nodes.length;i++){
-			let n = this.nodes[i];
-			if(!n.step()){this.nodes[w++]=n}
+// Hàm hiển thị pháo hoa
+function showFireworks() {
+	let {abs,min,max,random,PI,sin,cos}=Math;
+	let rrng=(n=0,p=1)=>(random()*(p-n))+n;
+	let irrng=(n=0,p=1)=>((random()*(p-n))+n)|0;
+	let grav = -.0098;
+	function* mt(){}
+	class sys{
+		constructor(){
+			this.nodes = []
+			this.now=performance.now()/1000;
 		}
-		this.nodes.length = w;
+		step(){
+			let now=performance.now()/1000;
+			this.dt = now-this.now;
+			this.now=now;
+			this.ndt = this.dt/(1/60)
+			let i=0,w=0;
+			for(;i<this.nodes.length;i++){
+				let n = this.nodes[i];
+				if(!n.step()){this.nodes[w++]=n}
+			}
+			this.nodes.length = w;
+		}
+		emit(fn=mt,ctx){
+			let n = new sys.node(this);
+			n.flow = flow.start(fn,n,ctx);
+			n.flow.onDone=()=>n.dead=true;
+			n.velocity.randomDirection();
+			n.velocity.x *= .1;
+			n.velocity.z *= .1;
+			n.velocity.y = abs(n.velocity.y);
+			n.velocity.y *= .4;
+			this.nodes.push(n)
+			return n;
+		}
 	}
-	emit(fn=mt,ctx){
-		let n = new sys.node(this);
-		n.flow = flow.start(fn,n,ctx);
-		n.flow.onDone=()=>n.dead=true;
-		n.velocity.randomDirection();
-		n.velocity.x *= .1;
-		n.velocity.z *= .1;
-		n.velocity.y = abs(n.velocity.y);
-		n.velocity.y *= .4;
-		this.nodes.push(n)
-		return n;
-	}
-}
-
-	let _p=vec3();
-	let _n=vec3();
-	let cscale = (c, v) => {
-		return (((((c >> 0) & 255) * v) | 0) << 0)
-			| (((((c >> 8) & 255) * v) | 0) << 8)
-			| (((((c >> 16) & 255) * v) | 0) << 16);
-	};
-
-sys.node = class {
-	constructor(sys){
-		this.sys = sys;
-		this.life = .2;
-		this.spawntime = sys.now
-		this.mass = 1.;
-		this.drag = 0;
-		this.position = vec3()
-		this.velocity = vec3()
-		this.color = (Math.random()*(1<<24))|0;
-		this.prims = new Array(8);
-		this.ptop = 0;
-	}
-	destroyPrim(p){
-		dd.pushtop(p)
-		dd.moveto(0,0,0)
-		dd.lineto(0,0,0)
-		dd.poptop()
-	}
-	dispose(){
-		let t=this.ptop;
-		if(this.ptop>=this.prims.length)t=this.prims.length;
-		for(let i=0;i<t;i++)
-			this.destroyPrim(this.prims[i])
-	}
-	step(){
-		dd.color = this.color;
-
-		let age = min(1,(this.sys.now-this.spawntime)/this.life);
-
-		
-		if(this.ptop>=this.prims.length){
-			let p = this.prims[this.ptop%this.prims.length]
+	
+		let _p=vec3();
+		let _n=vec3();
+		let cscale = (c, v) => {
+			return (((((c >> 0) & 255) * v) | 0) << 0)
+				| (((((c >> 8) & 255) * v) | 0) << 8)
+				| (((((c >> 16) & 255) * v) | 0) << 16);
+		};
+	
+	sys.node = class {
+		constructor(sys){
+			this.sys = sys;
+			this.life = .2;
+			this.spawntime = sys.now
+			this.mass = 1.;
+			this.drag = 0;
+			this.position = vec3()
+			this.velocity = vec3()
+			this.color = (Math.random()*(1<<24))|0;
+			this.prims = new Array(8);
+			this.ptop = 0;
+		}
+		destroyPrim(p){
 			dd.pushtop(p)
 			dd.moveto(0,0,0)
 			dd.lineto(0,0,0)
 			dd.poptop()
 		}
-		
-		this.prims[this.ptop%this.prims.length]=dd.top();
-		this.ptop++;
-		dd.moveto(this.position)
-		_p.copy(this.velocity);
-		_p.multiplyScalar(this.sys.ndt);
-		this.position.add(_p);
-		dd.lineto(this.position)
-		this.velocity.y += grav*this.mass*this.sys.ndt;
-		if(this.position.y<0){
-			this.position.y=0-this.position.y;
-			this.velocity.y *= -1.;
-			this.velocity.multiplyScalar(.5);
-		}else{
-			if(this.drag)
-				this.velocity.multiplyScalar(this.drag);			
+		dispose(){
+			let t=this.ptop;
+			if(this.ptop>=this.prims.length)t=this.prims.length;
+			for(let i=0;i<t;i++)
+				this.destroyPrim(this.prims[i])
 		}
-		for(let i=0,t=min(this.prims.length,this.ptop);i<t;i++){
-			let id=(this.ptop+i)%this.prims.length;
-			let p = this.prims[id]
-			let brightness = (i/t)*(((1-age)**2)*2.0);
-			dd.pushtop(p)
-			dd.lineCol(dd._color,brightness);
-			dd.poptop()
+		step(){
+			dd.color = this.color;
+	
+			let age = min(1,(this.sys.now-this.spawntime)/this.life);
+	
+			
+			if(this.ptop>=this.prims.length){
+				let p = this.prims[this.ptop%this.prims.length]
+				dd.pushtop(p)
+				dd.moveto(0,0,0)
+				dd.lineto(0,0,0)
+				dd.poptop()
+			}
+			
+			this.prims[this.ptop%this.prims.length]=dd.top();
+			this.ptop++;
+			dd.moveto(this.position)
+			_p.copy(this.velocity);
+			_p.multiplyScalar(this.sys.ndt);
+			this.position.add(_p);
+			dd.lineto(this.position)
+			this.velocity.y += grav*this.mass*this.sys.ndt;
+			if(this.position.y<0){
+				this.position.y=0-this.position.y;
+				this.velocity.y *= -1.;
+				this.velocity.multiplyScalar(.5);
+			}else{
+				if(this.drag)
+					this.velocity.multiplyScalar(this.drag);			
+			}
+			for(let i=0,t=min(this.prims.length,this.ptop);i<t;i++){
+				let id=(this.ptop+i)%this.prims.length;
+				let p = this.prims[id]
+				let brightness = (i/t)*(((1-age)**2)*2.0);
+				dd.pushtop(p)
+				dd.lineCol(dd._color,brightness);
+				dd.poptop()
+			}
+			
+			if(this.dead){
+				this.dispose();
+				return true;
+			}
 		}
-		
-		if(this.dead){
-			this.dispose();
-			return true;
+	}
+	
+	function* spark(n,shell){
+		n.position.copy(shell.position);
+		n.velocity.randomDirection().multiplyScalar(.23 * shell.power);
+		n.velocity.add(shell.velocity);
+		n.life = rrng(.8,1.);
+		n.mass = rrng(0.5,1.);
+		n.drag = rrng(.95,.99);
+		yield n.life*1000;
+	}
+	
+	function* shell(shell){
+		shell.velocity.y+=.7;
+		shell.velocity.x*=1.5;
+		shell.velocity.z*=1.5;
+		shell.power = rrng(1,2);
+		shell.life = 1.05*shell.power;
+		yield shell.life*1000;// (1900*shell.velocity.y)|0;
+		shell.dead = true;
+	
+		if(thraxBomb&&(!irrng(0,20))){
+			shell.sys.emit(thraxBomb,shell);
+		}
+		for(let i=0;i<50;i++){
+			shell.sys.emit(spark,shell);
 		}
 	}
+	
+	function* launcher(launcher){
+		launcher.velocity.set(0,0,0);
+		launcher.position.set(0, 0, 0);
+		while(1){
+			//yield irrng(10,30);
+			yield irrng(5, 15);
+			if(rrng()>.95)
+				yield 3000;
+			launcher.sys.emit(shell,launcher)
+		}
+	}
+	let msys = new sys;
+	msys.emit(launcher);
+	
+	flow.start(function*(){
+		while(1){
+			msys.step()
+			yield 0;
+		}
+	})
 }
 
+// Lắng nghe sự kiện nhấn chuột
+window.addEventListener('click', function () {
+    if (messageBox) {
+        const glitchDuration = 500; // Thời gian tổng cộng cho hiệu ứng glitch
+        const glitchInterval = 50; // Khoảng thời gian giữa các thay đổi
+        const totalSteps = glitchDuration / glitchInterval; // Số bước trong hiệu ứng
+        let step = 0;
 
-function* spark(n,shell){
-	n.position.copy(shell.position);
-	n.velocity.randomDirection().multiplyScalar(.23 * shell.power);
-	n.velocity.add(shell.velocity);
-	n.life = rrng(.8,1.);
-	n.mass = rrng(0.5,1.);
-	n.drag = rrng(.95,.99);
-	yield n.life*1000;
-}
+        const glitchEffect = setInterval(() => {
+            if (step < totalSteps) {
+                // Thay đổi màu sắc ngẫu nhiên
+                const randomColor = new THREE.Color(Math.random(), Math.random(), Math.random());
+                messageBox.material.color.set(randomColor);
 
-function* shell(shell){
-	shell.velocity.y+=.7;
-	shell.velocity.x*=1.5;
-	shell.velocity.z*=1.5;
-	shell.power = rrng(1,2);
-	shell.life = 1.05*shell.power;
-	yield shell.life*1000;// (1900*shell.velocity.y)|0;
-	shell.dead = true;
+                // Thay đổi độ trong suốt ngẫu nhiên
+                messageBox.material.opacity = Math.random();
 
-	if(thraxBomb&&(!irrng(0,20))){
-		shell.sys.emit(thraxBomb,shell);
-	}
-	for(let i=0;i<50;i++){
-		shell.sys.emit(spark,shell);
-	}
-}
+                step++;
+            } else {
+                clearInterval(glitchEffect); // Dừng hiệu ứng
+                scene.remove(messageBox); // Xóa message box khỏi scene
+                messageBox = null; // Đặt lại biến
+            }
+        }, glitchInterval); // Thay đổi mỗi 50ms
 
-function* launcher(launcher){
-	launcher.velocity.set(0,0,0);
-	launcher.position.set(0, 0, 0);
-	while(1){
-		//yield irrng(10,30);
-		yield irrng(5, 15);
-		if(rrng()>.95)
-			yield 3000;
-		launcher.sys.emit(shell,launcher)
-	}
-}
-let msys = new sys;
-msys.emit(launcher);
+    }
 
-flow.start(function*(){
-	while(1){
-		msys.step()
-		yield 0;
-	}
-})
+    addBirthdayText();
+    showFireworks();
+    extinguishFlames();
+});
 
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
@@ -268,18 +421,6 @@ const loader = new FontLoader();
 
 let thraxBomb;
 loader.load( 'Noto Sans_Regular.json', function ( font ) {
-
-	const geometry = new TextGeometry( 'thrax', {
-        font: font,
-        size: 16,
-        depth: 1.,
-        curveSegments: 2,
-        bevelEnabled: true,
-        bevelThickness: .1,
-        bevelSize: .1,
-        bevelOffset: 0,
-        bevelSegments: 1
-    });
 	let mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#300'}))
 	
 	scene.add(mesh)
@@ -346,73 +487,7 @@ loader.load( 'Noto Sans_Regular.json', function ( font ) {
 	};
 } );
 
-let text = 'Chúc mừng sinh nhật Quân chan\nMong được đồng hành cùng cậu\nđến quãng đời còn lại';
-
-// Tạo các chữ cái riêng biệt và thêm chúng vào scene dần dần
-let letters = [];
-let index = 0;
-let maxIndex = text.length;
-let lineHeight = 10; // Khoảng cách giữa các dòng chữ
-let xOffset = -80;   // Vị trí bắt đầu của chữ trên trục X
-let yOffset = 50;    // Vị trí bắt đầu của chữ trên trục Y
-let currentLine = 0; // Biến để theo dõi dòng hiện tại
-let currentX = xOffset; // Vị trí X hiện tại cho từng chữ
-
-loader.load('Noto Sans_Regular.json', function (font) {
-    function createLetterGeometry(letter, positionX, positionY) {
-        const geometry = new TextGeometry(letter, {
-            font: font,
-            size: 5,
-            height: 1,
-            curveSegments: 12,
-            bevelEnabled: true,
-            bevelThickness: 0.5,
-            bevelSize: 0.3,
-            bevelSegments: 5,
-        });
-        const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(0xffffff), // Màu trắng cho chữ
-            roughness: 0.5,
-            metalness: 0.0,
-            emissive: 0xffffff,
-            emissiveIntensity: 0.5,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(positionX, positionY, -50);
-        return mesh;
-    }
-
-    function addLetters() {
-        if (index < maxIndex) {
-            const letter = text[index];
-            
-            // Xử lý xuống dòng
-            if (letter === '\n') {
-                currentLine++; // Tăng dòng
-                currentX = xOffset; // Đặt lại vị trí X về đầu dòng
-                index++; // Bỏ qua ký tự xuống dòng
-                return addLetters(); // Gọi lại để xử lý ký tự tiếp theo
-            }
-
-            const positionY = yOffset - currentLine * lineHeight;
-            const letterMesh = createLetterGeometry(letter, currentX, positionY);
-
-            // Thêm chữ vào scene nếu không phải khoảng trắng
-            if (letter !== ' ') {
-                scene.add(letterMesh);
-                letters.push(letterMesh);
-            }
-
-            currentX += 6; // Tăng vị trí X cho chữ tiếp theo
-            index++; // Tăng index để xử lý chữ tiếp theo
-        }
-
-        if (index < maxIndex) {
-            setTimeout(addLetters, 100); // Tiếp tục thêm chữ sau 100ms
-        }
-    }
-    addLetters(); // Bắt đầu thêm chữ
-});
+createCake();
 
 // Xóa button chọn
 const lilGuiElement = document.querySelector('.lil-gui');
