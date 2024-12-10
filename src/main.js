@@ -1,25 +1,91 @@
 import Renderer from "./utils/renderer.js"
 import startApp from './utils/app.js'
-let renderer3 = new Renderer();
 
+let renderer3 = new Renderer();
 let {THREE, scene,camera,renderer, controls, gltfLoader, flow, raycasting,ground,buttons,vec3} = renderer3;
-window.app = await startApp({
-    renderer3
-})
+
+window.app = await startApp({ renderer3 });
+renderer3.start();
 
 let {dd} = renderer3;
 
-window.app = await startApp({
-    renderer3
-});
+camera.position.set(0.00, 50, 50.00); // Camera position
 
-// Thiết lập vị trí và góc quay của camera
-camera.position.set(-0.02, 33, 63.73);
+// Bánh
+function createCake() {
+    const cakeGroup = new THREE.Group();
 
-renderer3.start();
+    // Base of the cake (cylinder)
+    const baseGeometry = new THREE.CylinderGeometry(20, 20, 10, 32); // Tăng kích thước đáy bánh
+    const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffc0cb });
+    const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+    baseMesh.position.y = 5;
+    cakeGroup.add(baseMesh);
 
+    // Top layer of icing
+    const topGeometry = new THREE.CylinderGeometry(21, 21, 2, 32); // Tăng kích thước lớp kem
+    const topMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const topMesh = new THREE.Mesh(topGeometry, topMaterial);
+    topMesh.position.y = 11;
+    cakeGroup.add(topMesh);
 
-//controls.autoRotate = true
+    // Decoration: Torus around the cake
+    const torusGeometry = new THREE.TorusGeometry(21, 1, 16, 100); // Tăng kích thước vòng trang trí
+    const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4 });
+    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
+    torusMesh.rotation.x = Math.PI / 2;
+    torusMesh.position.y = 11;
+    cakeGroup.add(torusMesh);
+
+    // Adding candles with animated flames
+    const candleGeometry = new THREE.CylinderGeometry(0.6, 0.6, 8, 16); // Tăng kích thước nến
+    const candleMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+
+    const flameGeometry = new THREE.CylinderGeometry(0.2, 1, 2, 16); // Tăng kích thước ngọn lửa
+    const flameMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500 });
+
+    for (let i = 0; i < 5; i++) {
+        const candleMesh = new THREE.Mesh(candleGeometry, candleMaterial);
+        candleMesh.position.set(
+            Math.cos((i / 5) * Math.PI * 2) * 10, // Bán kính tăng theo kích thước bánh
+            16,
+            Math.sin((i / 5) * Math.PI * 2) * 10
+        );
+        cakeGroup.add(candleMesh);
+
+        // Create flame mesh
+        const flameMesh = new THREE.Mesh(flameGeometry, flameMaterial);
+        flameMesh.position.set(
+            Math.cos((i / 5) * Math.PI * 2) * 10,
+            20, // Ngọn lửa cao hơn nến
+            Math.sin((i / 5) * Math.PI * 2) * 10
+        );
+
+        // Make the flame point straight up
+        flameMesh.rotation.x = Math.PI / 2;
+
+        // Animate flame flickering
+        (function (flame) {
+            let scale = 1;
+            let direction = 1;
+
+            function animateFlame() {
+                scale += direction * 0.05;
+                if (scale > 1.1 || scale < 0.9) direction *= -1; // Flicker effect
+                flame.scale.set(scale, scale, scale);
+                requestAnimationFrame(animateFlame);
+            }
+            animateFlame();
+        })(flameMesh);
+
+        cakeGroup.add(flameMesh);
+    }
+
+    // Set cake position in the scene
+    cakeGroup.position.set(0, 0, -30); // Dịch bánh kem ra xa hơn để nhìn tổng thể
+    scene.add(cakeGroup);
+}
+createCake();
 
 import {ParticleContext} from "./components/rtparticles2.js"
 
@@ -266,158 +332,87 @@ loader.load( 'Noto Sans_Regular.json', function ( font ) {
 	
 	
 	thraxBomb = function*(n,shell){
-		for(let i=0; i < 100; i++){
+		for(let i=0; i < 300; i++){
 			let spark = n.sys.emit(meshSpark,shell)
 			spark.color = n.color;
 		}
 	}
 
 	thraxBomb = function* (n, shell) {
-		for (let i = 0; i < 500; i++) {
+		for (let i = 0; i < 200; i++) {
 			let spark = n.sys.emit(heartSpark, shell);
 			spark.color = n.color;
 		}
 	};
 } );
 
+let text = 'Chúc mừng sinh nhật Quân chan\nMong được đồng hành cùng cậu\nđến quãng đời còn lại';
+
+// Tạo các chữ cái riêng biệt và thêm chúng vào scene dần dần
+let letters = [];
+let index = 0;
+let maxIndex = text.length;
+let lineHeight = 10; // Khoảng cách giữa các dòng chữ
+let xOffset = -80;   // Vị trí bắt đầu của chữ trên trục X
+let yOffset = 50;    // Vị trí bắt đầu của chữ trên trục Y
+let currentLine = 0; // Biến để theo dõi dòng hiện tại
+let currentX = xOffset; // Vị trí X hiện tại cho từng chữ
+
 loader.load('Noto Sans_Regular.json', function (font) {
-    const textGeometry = new TextGeometry('Chúc mừng sinh nhật Quân chan\nMong được đồng hành cùng cậu\nđến quãng đời còn lại', {
-        font: font,
-        size: 5, // Decrease the size
-        height: 1,
-        curveSegments: 12,
-        bevelEnabled: true,
-        bevelThickness: 0.5,
-        bevelSize: 0.3,
-        bevelSegments: 5,
-    });
-
-    // Set color and emissive properties
-    const textMaterial = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(0xffffff), // White color
-        roughness: 0.5,
-        metalness: 0.0,
-        emissive: 0xffffff,
-        emissiveIntensity: 0.5,
-        side: THREE.FrontSide
-    });
-
-    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-
-    // Center the text by adjusting its position
-    const boundingBox = new THREE.Box3().setFromObject(textMesh);
-    const center = new THREE.Vector3();
-    boundingBox.getCenter(center);
-    textMesh.position.set(-50, 50, -50); // Center the text
-
-    // Optional: Adjust the Y position for better visibility
-    textMesh.position.y += 2; // Move it slightly up
-
-    scene.add(textMesh);
-
-    // Rainbow effect
-    let time = 0;
-    const rainbowColors = [
-        new THREE.Color(0xFF0000), // Red
-        new THREE.Color(0xFF7F00), // Orange
-        new THREE.Color(0xFFFF00), // Yellow
-        new THREE.Color(0x00FF00), // Green
-        new THREE.Color(0x0000FF), // Blue
-        new THREE.Color(0x4B0082), // Indigo
-        new THREE.Color(0x8B00FF), // Violet
-    ];
-
-    function updateRainbow() {
-        time += 0.01;
-        const colorIndex = Math.floor(time * rainbowColors.length) % rainbowColors.length;
-        textMaterial.color = rainbowColors[colorIndex];
+    function createLetterGeometry(letter, positionX, positionY) {
+        const geometry = new TextGeometry(letter, {
+            font: font,
+            size: 5,
+            height: 1,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.5,
+            bevelSize: 0.3,
+            bevelSegments: 5,
+        });
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(0xffffff), // Màu trắng cho chữ
+            roughness: 0.5,
+            metalness: 0.0,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.5,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(positionX, positionY, -50);
+        return mesh;
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        updateRainbow();
-    }
-    animate();
-});
-
-// Bánh
-function createCake() {
-    const cakeGroup = new THREE.Group();
-
-    // Base of the cake (cylinder)
-    const baseGeometry = new THREE.CylinderGeometry(10, 10, 5, 32);
-    const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffc0cb });
-    const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
-    baseMesh.position.y = 2.5;
-    cakeGroup.add(baseMesh);
-
-    // Top layer of icing
-    const topGeometry = new THREE.CylinderGeometry(10.5, 10.5, 1, 32);
-    const topMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const topMesh = new THREE.Mesh(topGeometry, topMaterial);
-    topMesh.position.y = 6;
-    cakeGroup.add(topMesh);
-
-    // Decoration: Torus around the cake
-    const torusGeometry = new THREE.TorusGeometry(10.5, 0.5, 16, 100);
-    const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4 });
-    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-    torusMesh.rotation.x = Math.PI / 2;
-    torusMesh.position.y = 6;
-    cakeGroup.add(torusMesh);
-
-    // Adding candles with animated flames
-    const candleGeometry = new THREE.CylinderGeometry(0.3, 0.3, 4, 16);
-    const candleMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
-    
-    // Adjusted flame geometry
-    const flameGeometry = new THREE.CylinderGeometry(0.1, 0.5, 1, 16);
-    const flameMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500 });
-
-    for (let i = 0; i < 5; i++) {
-        const candleMesh = new THREE.Mesh(candleGeometry, candleMaterial);
-        candleMesh.position.set(
-            Math.cos((i / 5) * Math.PI * 2) * 5,
-            8,
-            Math.sin((i / 5) * Math.PI * 2) * 5
-        );
-        cakeGroup.add(candleMesh);
-
-        // Create flame mesh
-        const flameMesh = new THREE.Mesh(flameGeometry, flameMaterial);
-        flameMesh.position.set(
-            Math.cos((i / 5) * Math.PI * 2) * 5,
-            10, // Position above the candle
-            Math.sin((i / 5) * Math.PI * 2) * 5
-        );
-
-        // Make the flame point straight up
-        flameMesh.rotation.x = Math.PI / 2; // Rotate to point up
-
-        // Animate flame flickering
-        (function (flame) {
-            let scale = 1;
-            let direction = 1;
-
-            function animateFlame() {
-                scale += direction * 0.05;
-                if (scale > 1.1 || scale < 0.9) direction *= -1; // Flicker effect
-                flame.scale.set(scale, scale, scale);
-                requestAnimationFrame(animateFlame);
+    function addLetters() {
+        if (index < maxIndex) {
+            const letter = text[index];
+            
+            // Xử lý xuống dòng
+            if (letter === '\n') {
+                currentLine++; // Tăng dòng
+                currentX = xOffset; // Đặt lại vị trí X về đầu dòng
+                index++; // Bỏ qua ký tự xuống dòng
+                return addLetters(); // Gọi lại để xử lý ký tự tiếp theo
             }
-            animateFlame();
-        })(flameMesh);
 
-        cakeGroup.add(flameMesh);
+            const positionY = yOffset - currentLine * lineHeight;
+            const letterMesh = createLetterGeometry(letter, currentX, positionY);
+
+            // Thêm chữ vào scene nếu không phải khoảng trắng
+            if (letter !== ' ') {
+                scene.add(letterMesh);
+                letters.push(letterMesh);
+            }
+
+            currentX += 6; // Tăng vị trí X cho chữ tiếp theo
+            index++; // Tăng index để xử lý chữ tiếp theo
+        }
+
+        if (index < maxIndex) {
+            setTimeout(addLetters, 100); // Tiếp tục thêm chữ sau 100ms
+        }
     }
-
-    // Set cake position in the scene
-    cakeGroup.position.set(0, 0, -20);
-    scene.add(cakeGroup);
-}
-
-// Call the createCake function to add the cake to the scene
-createCake();
+    addLetters(); // Bắt đầu thêm chữ
+});
 
 // Xóa button chọn
 const lilGuiElement = document.querySelector('.lil-gui');
