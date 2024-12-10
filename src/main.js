@@ -374,38 +374,6 @@ function showFireworks() {
 	})
 }
 
-// Lắng nghe sự kiện nhấn chuột
-window.addEventListener('click', function () {
-    if (messageBox) {
-        const glitchDuration = 500; // Thời gian tổng cộng cho hiệu ứng glitch
-        const glitchInterval = 50; // Khoảng thời gian giữa các thay đổi
-        const totalSteps = glitchDuration / glitchInterval; // Số bước trong hiệu ứng
-        let step = 0;
-
-        const glitchEffect = setInterval(() => {
-            if (step < totalSteps) {
-                // Thay đổi màu sắc ngẫu nhiên
-                const randomColor = new THREE.Color(Math.random(), Math.random(), Math.random());
-                messageBox.material.color.set(randomColor);
-
-                // Thay đổi độ trong suốt ngẫu nhiên
-                messageBox.material.opacity = Math.random();
-
-                step++;
-            } else {
-                clearInterval(glitchEffect); // Dừng hiệu ứng
-                scene.remove(messageBox); // Xóa message box khỏi scene
-                messageBox = null; // Đặt lại biến
-            }
-        }, glitchInterval); // Thay đổi mỗi 50ms
-
-    }
-
-    addBirthdayText();
-    showFireworks();
-    extinguishFlames();
-});
-
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
@@ -452,25 +420,24 @@ loader.load( 'Noto Sans_Regular.json', function ( font ) {
 	}
 
 	function* heartSpark(n, shell) {
-		let t = rrng(0, 2 * PI); // Góc để tính toán vị trí
+		let t = Math.random() * 2 * Math.PI; // Góc để tính toán vị trí
 		let scale = 0.5; // Kích thước hình trái tim
 		_p.set(
 			scale * 16 * Math.pow(Math.sin(t), 3),
 			scale * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)),
-			rrng(-0.5, 0.5) // Giá trị z ngẫu nhiên để tạo 3D
+			Math.random() * 1 - 0.5 // Giá trị z ngẫu nhiên để tạo 3D
 		);
-	
+
 		_p.applyQuaternion(camera.quaternion); // Đưa vào không gian camera
 		n.position.copy(shell.position);
 		n.position.add(_p);
 		n.velocity.copy(_p).multiplyScalar(0.1); // Tốc độ di chuyển của tia
 		n.velocity.add(shell.velocity); // Thêm vận tốc ban đầu
-		n.life = rrng(1.5, 3); // Thời gian sống
+		n.life = Math.random() * 1.5 + 1.5; // Thời gian sống
 		n.mass = 1.2;
 		n.drag = 0.99;
 		yield n.life * 1000;
 	}
-	
 	
 	thraxBomb = function*(n,shell){
 		for(let i=0; i < 300; i++){
@@ -485,9 +452,73 @@ loader.load( 'Noto Sans_Regular.json', function ( font ) {
 			spark.color = n.color;
 		}
 	};
+
+	function* heartSpark(n, shell) {
+		let t = Math.random() * 2 * Math.PI;
+		let scale = 0.5;
+		_p.set(
+			scale * 16 * Math.pow(Math.sin(t), 3),
+			scale * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)),
+			Math.random() * 1 - 0.5
+		);
+	
+		_p.applyQuaternion(camera.quaternion);
+		n.position.copy(shell.position);
+		n.position.add(_p);
+		n.velocity.copy(_p).multiplyScalar(0.1);
+		n.velocity.add(shell.velocity);
+		n.life = Math.random() * 1.5 + 1.5;
+		n.mass = 1.2;
+		n.drag = 0.99;
+		yield n.life * 1000;
+	}
+	
+
 } );
 
 createCake();
+
+// Hàm xử lý logic khi xảy ra sự kiện
+function handleInteraction() {
+    if (messageBox) {
+        const glitchDuration = 500;
+        const glitchInterval = 50;
+        let step = 0;
+
+        const glitchEffect = setInterval(() => {
+            if (step < glitchDuration / glitchInterval) {
+                const randomColor = new THREE.Color(Math.random(), Math.random(), Math.random());
+                messageBox.material.color.set(randomColor);
+                messageBox.material.opacity = Math.random();
+                step++;
+            } else {
+                clearInterval(glitchEffect);
+                scene.remove(messageBox);
+                messageBox = null;
+
+                // Kích hoạt hiệu ứng `thraxBomb` sau khi thổi nến
+                const shell = { position: new THREE.Vector3(0, 0, 0), velocity: new THREE.Vector3(0, 0, 0) };
+                const n = {
+                    sys: {
+                        emit: (func, shell) => {
+                            flow.start(func(n, shell));
+                        }
+                    },
+                    color: 0xff0000
+                };
+                flow.start(thraxBomb(n, shell));
+            }
+        }, glitchInterval);
+    }
+
+    addBirthdayText();
+    showFireworks();
+    extinguishFlames();
+}
+
+// Lắng nghe sự kiện click và touchstart
+window.addEventListener('click', handleInteraction);
+window.addEventListener('touchstart', handleInteraction);
 
 // Xóa button chọn
 const lilGuiElement = document.querySelector('.lil-gui');
