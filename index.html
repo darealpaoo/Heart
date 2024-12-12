@@ -3,6 +3,8 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
+    <title>Heart</title>
+    <link rel="icon" href="capoo-bugcat.png" type="image/png" />
     <script type="importmap">
       {
         "imports": {
@@ -71,6 +73,7 @@
 
       birthdayButton.addEventListener('click', () => {
         messageBox.textContent = 'Đúng gòiii sao giỏi thíaaa! Đợi 3 giây nhaaa';
+        gifImage.src = 'uwu.gif';
         messageBox.className = 'message-box success';
         messageBox.style.display = 'block';
 
@@ -78,7 +81,11 @@
         notBirthdayButton.style.display = 'none';
         question.style.display = 'none';
 
-        gifImage.src = 'uwu.gif';
+        setTimeout(() => {
+          backgroundMusic.play().catch(error => {
+            console.error('Không thể phát nhạc do trình duyệt chặn:', error);
+          });
+        }, 5000);
 
         setTimeout(() => {
           overlay.classList.add('fade-out'); 
@@ -97,14 +104,13 @@
 
       notBirthdayButton.addEventListener('click', () => {
         if (retryButton.style.display !== 'block') {
+            gifImage.src = 'no.gif';
             messageBox.style.display = 'none';
             retryButton.style.display = 'block';
 
             birthdayButton.style.display = 'none';
             notBirthdayButton.style.display = 'none';
             question.style.display = 'none';
-
-            gifImage.src = 'no.gif';
         }
       });
 
